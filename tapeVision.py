@@ -5,8 +5,8 @@ import math
 import time
 
 def findTape(img):
-    minGreen = (70, 10, 50)
-    maxGreen = (120, 255, 255)
+    minGreen = (60, 177, 177)
+    maxGreen = (160, 255, 255)
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
     mask = cv2.inRange(hsv, minGreen, maxGreen)
     mask=cv2.erode(mask, None, iterations=2)
@@ -15,7 +15,7 @@ def findTape(img):
     contours = cv2.findContours(mask, 1,2)[-2]
     if len(contours)>1:
         contours.sort(key=cv2.contourArea)
-        removeUnder(50, contours)
+        removeUnder(10, contours)
         rects=[]
         boxes=[]
         for i in range(len(contours)):
@@ -23,11 +23,12 @@ def findTape(img):
         pairs=findPairs(rects)
         correctPairs=[]
         for i in range(len(pairs)):
-            if checkOrien(pairs[i]):
+            if checkOrien(pairs[i]) == True:
                 correctPairs.append(pairs[i])
-        print(correctPairs)
-        for b in range(len(correctPairs[0])):
-            boxes.append(cv2.boxPoints(correctPairs[0][b]))
+                
+        for b in range(len(correctPairs)):
+            boxes.append(cv2.boxPoints(correctPairs[b][0]))
+            boxes.append(cv2.boxPoints(correctPairs[b][1]))
             
         boxes=np.int0(boxes)
         show=currentImg.copy()
@@ -70,9 +71,10 @@ def findPairs(rects):
 
 def splitRemove(rectList):
     at=-35 #below 35 in one list above in another
+    miss=10
     list1, list2=[], []
     for i in range(len(rectList)):
-        if (rectList[i][2]<-10 and rectList[i][2]>-20) or (rectList[i][2]<-70 and rectList[i][2]>-80):
+        if (rectList[i][2]<-(15-miss) and rectList[i][2]>-(15+miss)) or (rectList[i][2]<-(75-miss) and rectList[i][2]>-(75+miss)):
             if rectList[i][2]<at:
                 list1.append(rectList[i])
             else:
@@ -88,7 +90,7 @@ def checkOrien(pair):
 #( center (x,y), (width, height), angle of rotation ) min area rect things
 
 files = os.listdir(".\images")
-index = 7
+index = 0
 currentImg = cv2.imread("./images/"+files[index], 1)
 
 while True:
@@ -106,5 +108,3 @@ while True:
 #cap.release()
 cv2.destroyAllWindows()
 quit()
-
-
