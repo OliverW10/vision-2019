@@ -25,11 +25,25 @@ def findTape(img):
         for i in range(len(pairs)):
             if checkOrien(pairs[i]) == True:
                 correctPairs.append(pairs[i])
-                
+        
+        allRects=[]
+        for i in range(len(correctPairs)):
+            if correctPairs[i][0] in allRects:
+                #check which of the opposet of the pairs is closer then delete the further away one
+            else:
+                allRects.append(correctPairs[i][0]
+                                
+            if correctPairs[i][0] in allRects:
+                #check which of the opposet of the pairs is closer then delete the further away one
+            else:
+                allRects.append(correctPairs[i][0]
+
+
+          
         for b in range(len(correctPairs)):
             boxes.append(cv2.boxPoints(correctPairs[b][0]))
             boxes.append(cv2.boxPoints(correctPairs[b][1]))
-            
+        
         boxes=np.int0(boxes)
         show=currentImg.copy()
         for i in range(len(boxes)):
@@ -86,6 +100,13 @@ def checkOrien(pair):
     if pair[1][0][0]>pair[0][0][0]:
         return True
     else: return False
+
+def closer(X1, X23):
+    dist=[X1-X23[0], X1-X23[1]]
+    if abs(dist[0])>abs(dist[1]):
+        return 0
+    else:
+        return 1
     
 #( center (x,y), (width, height), angle of rotation ) min area rect things
 
