@@ -25,25 +25,28 @@ def findTape(img):
         for i in range(len(pairs)):
             if checkOrien(pairs[i]) == True:
                 correctPairs.append(pairs[i])
-        
+                
         allRects=[]
+        '''
         for i in range(len(correctPairs)):
             if correctPairs[i][0] in allRects:
+                pass
                 #check which of the opposet of the pairs is closer then delete the further away one
             else:
                 allRects.append(correctPairs[i][0]
                                 
             if correctPairs[i][0] in allRects:
+                                pass
                 #check which of the opposet of the pairs is closer then delete the further away one
             else:
                 allRects.append(correctPairs[i][0]
-
+        '''
 
           
         for b in range(len(correctPairs)):
             boxes.append(cv2.boxPoints(correctPairs[b][0]))
             boxes.append(cv2.boxPoints(correctPairs[b][1]))
-        
+
         boxes=np.int0(boxes)
         show=currentImg.copy()
         for i in range(len(boxes)):
@@ -51,8 +54,8 @@ def findTape(img):
         cv2.imshow("mask", mask)
         cv2.imshow("img", show)
         
-        return {"rects" : rects, "boxes" : boxes}
-
+        return {"rects" : rects, "boxes" : boxes, "hatches":correctPairs}
+            # rects is all found tape and boxes is all correct found tape (as box) and hatches is 
 def removeUnder(under, contours):
     for c in range(len(contours)):
         if cv2.contourArea(contours[c])<under:
@@ -60,12 +63,12 @@ def removeUnder(under, contours):
             removeUnder(under, contours)
             break
         
-def findMid(box):
-    mid1=np.average(box[0], axis=0)
-    mid2=np.average(box[1], axis=0)
+def findMid(box): #despite my stupid brain naming this box it is actually all boxes and i arent bothered to change it
+    mid1=(box[0][0][0], box[0][0][1])
+    mid2=(box[1][0][0], box[1][0][1])
     bothMid=[(mid1[0]+mid2[0])/2, (mid1[1]+mid2[1])/2]
 
-    return (mid1, mid2, bothMid)
+    return (np.int0(mid1), np.int0(mid2), np.int0(bothMid))
     #   center of 1rst, center of 2nd, center of both
     
 def findAngleToCamera(FOV, X, W):
@@ -115,9 +118,14 @@ index = 0
 currentImg = cv2.imread("./images/"+files[index], 1)
 
 while True:
+    hatches=currentImg.copy()
     tapes = findTape(currentImg)
-    #mid = findMid(tapes["boxes"])
-    #angle = findAngleToCamera(90, mid[2][0], currentImg.shape[0])
+    if len(hatches)>1:
+        for i in range(len(tapes["hatches"])):
+            mid = findMid([tapes["hatches"][i][0], tapes["hatches"][i][1]])
+            cv2.ellipse(hatches,(mid[2][0], mid[2][1]), (mid[2][0]-mid[0][0], mid[2][1]-mid[0][1]+40),0, 0, 360,  (0,0,255), 3)
+        cv2.imshow("hatches", hatches)
+
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
     
@@ -125,7 +133,6 @@ while True:
         index+=1
         currentImg = cv2.imread("./images/"+files[index], 1)
         print("next")
-
 #cap.release()
 cv2.destroyAllWindows()
 quit()
