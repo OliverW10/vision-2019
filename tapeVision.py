@@ -6,7 +6,7 @@ import time
 
 def findTape(img):
     minGreen = (60, 177, 177)
-    maxGreen = (160, 255, 255)
+    maxGreen = (150, 255, 255)
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
     mask = cv2.inRange(hsv, minGreen, maxGreen)
     mask=cv2.erode(mask, None, iterations=2)
@@ -16,8 +16,9 @@ def findTape(img):
     if len(contours)>1:
         contours.sort(key=cv2.contourArea)
         removeUnder(10, contours)
-        rects=[]
+        rects=[]  #all rects
         boxes=[]
+        allBoxes=[]
         for i in range(len(contours)):
             rects.append(cv2.minAreaRect(contours[i]))
         pairs=findPairs(rects)
@@ -25,32 +26,38 @@ def findTape(img):
         for i in range(len(pairs)):
             if checkOrien(pairs[i]) == True:
                 correctPairs.append(pairs[i])
-                
-        allRects=[]
-        '''
-        for i in range(len(correctPairs)):
-            if correctPairs[i][0] in allRects:
-                pass
-                #check which of the opposet of the pairs is closer then delete the further away one
-            else:
-                allRects.append(correctPairs[i][0]
-                                
-            if correctPairs[i][0] in allRects:
-                                pass
-                #check which of the opposet of the pairs is closer then delete the further away one
-            else:
-                allRects.append(correctPairs[i][0]
-        '''
 
-          
+        for o in range(len(correctPairs)):
+            breaker=False
+            for i in range(len(correctPairs)):
+                if i!=o and correctPairs[o][0]==correctPairs[i][0]:
+                    if xdist(correctPairs[i][0][0][0], correctPairs[i][1][0][0])<xdist(correctPairs[o][0][0][0], correctPairs[o][1][0][0]):
+                        del correctPairs[o]
+                        breaker=True
+                        break
+                    else:
+                        del correctPairs[i]
+                        breaker=True
+                        break
+            if breaker==True:
+                break
+                    
+
+        for i in range (len(rects)):
+            allBoxes.append(cv2.boxPoints(rects[i]))
+            
         for b in range(len(correctPairs)):
             boxes.append(cv2.boxPoints(correctPairs[b][0]))
             boxes.append(cv2.boxPoints(correctPairs[b][1]))
 
         boxes=np.int0(boxes)
+        allBoxes=np.int0(allBoxes)
         show=currentImg.copy()
+        for i in range(len(allBoxes)):
+            cv2.drawContours(show, [allBoxes[i]] ,0,  (0,0,255) ,2)
+            
         for i in range(len(boxes)):
-            cv2.drawContours(show, [boxes[i]] ,0,  (0,0,255) ,2)
+            cv2.drawContours(show, [boxes[i]] ,0,  (0,255,0) ,2)
         cv2.imshow("mask", mask)
         cv2.imshow("img", show)
         
@@ -86,9 +93,9 @@ def findPairs(rects):
             pairs.append([lower[l], upper[u]])
     return pairs
 
-def splitRemove(rectList):
+def splitRemove(rectList):   ############### change this to make it able to spot skewed hatches
     at=-35 #below 35 in one list above in another
-    miss=10
+    miss=15
     list1, list2=[], []
     for i in range(len(rectList)):
         if (rectList[i][2]<-(15-miss) and rectList[i][2]>-(15+miss)) or (rectList[i][2]<-(75-miss) and rectList[i][2]>-(75+miss)):
@@ -110,6 +117,9 @@ def closer(X1, X23):
         return 0
     else:
         return 1
+
+def xdist(x1, x2):
+    return abs(x1-x2)
     
 #( center (x,y), (width, height), angle of rotation ) min area rect things
 
@@ -123,7 +133,7 @@ while True:
     if len(hatches)>1:
         for i in range(len(tapes["hatches"])):
             mid = findMid([tapes["hatches"][i][0], tapes["hatches"][i][1]])
-            cv2.ellipse(hatches,(mid[2][0], mid[2][1]), (mid[2][0]-mid[0][0], mid[2][1]-mid[0][1]+40),0, 0, 360,  (0,0,255), 3)
+            cv2.ellipse(hatches,(mid[2][0], mid[2][1]), (mid[2][0]-mid[0][0], mid[2][0]-mid[0][0]),0, 0, 360,  (0, 255, 255), 3)
         cv2.imshow("hatches", hatches)
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
