@@ -29,6 +29,7 @@ def findTape(img, display):
         for i in range(len(pairs)):
             if checkOrien(pairs[i]) == True:
                 correctPairs.append(pairs[i])
+
         for o in range(len(correctPairs)):
             breaker = False
             for i in range(len(correctPairs)):
@@ -64,10 +65,10 @@ def findTape(img, display):
             for i in range(len(boxes)):
                 cv2.drawContours(show, [boxes[i]], 0, (0, 255, 0), 2)
             cv2.imshow("img", show)
-        return {"rects": rects, "boxes": boxes, "hatches": correctPairs}
+        return {"rects": rects, "boxes": boxes, "hatches": correctPairs, "image":show}
         # rects is all found tape and boxes is all correct found tape (as box) and hatches is
     else:
-        return {"rects": [], "boxes": [], "hatches": []}
+        return {"rects": [], "boxes": [], "hatches": [], "image":show}
 
 
 def removeUnder(under, contours):
@@ -78,19 +79,13 @@ def removeUnder(under, contours):
             break
 
 
-def findMid(boxes):
+def findMid(boxes): #boxes are actually rects
     mid1 = (boxes[0][0][0], boxes[0][0][1])
     mid2 = (boxes[1][0][0], boxes[1][0][1])
     bothMid = [(mid1[0] + mid2[0]) / 2, (mid1[1] + mid2[1]) / 2]
 
     return (np.int0(mid1), np.int0(mid2), np.int0(bothMid))
     #   center of 1rst, center of 2nd, center of both
-
-
-def findAngleToCamera(FOV, X, W):
-    perc = X / W
-    angFromL = perc * FOV
-    return angFromL - FOV / 2
 
 
 def findPairs(rects):
@@ -104,9 +99,7 @@ def findPairs(rects):
     return pairs
 
 
-def splitRemove(
-    rectList
-):  ############### change this to make it able to spot skewed hatches
+def splitRemove(rectList):  ############### change this to make it able to spot skewed hatches
     at = -35  # below 35 in one list above in another
     miss = 15
     list1, list2 = [], []
@@ -146,6 +139,7 @@ def xdist(x1, x2):
 files = os.listdir(".\images")
 index = 0
 testImg = cv2.imread("./images/" + files[index], 1)
+
 def process(currentImg, display):
     hatches = currentImg.copy()
     tapes = findTape(currentImg, display)
@@ -166,13 +160,17 @@ def process(currentImg, display):
                     3,
                 )
         cv2.imshow("hatches", hatches)
-        return mids
+        if len(mids)==0:
+            tapes["rects"].sort(key=lambda x:x[1][0]*x[1][1])
+            return [findMid([tapes["rects"][0], tapes["rects"][1]]), tapes["image"]]
+        else:
+            return [mids, tapes["image"]]
     else:
         mids=[]
         if len(hatches) >= 1:
             for i in range(len(tapes["hatches"])):
                 mids.append(findMid([tapes["hatches"][i][0], tapes["hatches"][i][1]])[2])
-        return mids
+        return [mids, tapes["image"]]
 
 
 
@@ -180,7 +178,7 @@ def process(currentImg, display):
 
 if __name__=="__main__":
     while True:
-        process(testImg, True) #true is weather or not to display the stuff
+        print(process(testImg, True)) #true is weather or not to display the stuff
         cv2.imshow("the image", testImg)
         if cv2.waitKey(1) & 0xFF == ord("q"):
             break
