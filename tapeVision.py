@@ -6,7 +6,7 @@ import time
 
 
 def findTape(img, display):
-    minGreen = (30, 177, 177)  # colors to mask with
+    minGreen = (30, 177, 80)  # colors to mask with
     maxGreen = (150, 255, 255)
 
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
