@@ -6,16 +6,17 @@ import time
 
 
 def findTape(img, display):
-    minGreen = (60, 177, 177)  # colors to mask with
+    minGreen = (30, 177, 177)  # colors to mask with
     maxGreen = (150, 255, 255)
 
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
     mask = cv2.inRange(hsv, minGreen, maxGreen)
     mask = cv2.erode(mask, None, iterations=2)
     mask = cv2.dilate(mask, None, iterations=2)
+    cv2.imshow("mask", mask)
 
     contours = cv2.findContours(mask, 1, 2)[-2]
-    if len(contours) > 1:
+    if len(contours) >= 1:
         #contours.sort(key=cv2.contourArea) 
         removeUnder(10, contours)   #sort contours by area and then remove them if they're under a certen size
         rects = []  # all rects
@@ -28,7 +29,6 @@ def findTape(img, display):
         for i in range(len(pairs)):
             if checkOrien(pairs[i]) == True:
                 correctPairs.append(pairs[i])
-
         for o in range(len(correctPairs)):
             breaker = False
             for i in range(len(correctPairs)):
@@ -63,11 +63,11 @@ def findTape(img, display):
 
             for i in range(len(boxes)):
                 cv2.drawContours(show, [boxes[i]], 0, (0, 255, 0), 2)
-            cv2.imshow("mask", mask)
             cv2.imshow("img", show)
-
         return {"rects": rects, "boxes": boxes, "hatches": correctPairs}
         # rects is all found tape and boxes is all correct found tape (as box) and hatches is
+    else:
+        return {"rects": [], "boxes": [], "hatches": []}
 
 
 def removeUnder(under, contours):
@@ -151,7 +151,7 @@ def process(currentImg, display):
     tapes = findTape(currentImg, display)
     if display==True:
         mids=[]
-        if len(hatches) > 1:
+        if len(tapes["hatches"]) >= 1:
             for i in range(len(tapes["hatches"])):
                 mids.append(findMid([tapes["hatches"][i][0], tapes["hatches"][i][1]])[2])
                 mid = findMid([tapes["hatches"][i][0], tapes["hatches"][i][1]])
@@ -165,18 +165,22 @@ def process(currentImg, display):
                     (0, 255, 255),
                     3,
                 )
-            cv2.imshow("hatches", hatches)
+        cv2.imshow("hatches", hatches)
         return mids
     else:
         mids=[]
-        if len(hatches) > 1:
+        if len(hatches) >= 1:
             for i in range(len(tapes["hatches"])):
                 mids.append(findMid([tapes["hatches"][i][0], tapes["hatches"][i][1]])[2])
         return mids
 
+
+
+
+
 if __name__=="__main__":
     while True:
-        print(process(testImg, False)) #true is weather or not to display the stuff
+        process(testImg, True) #true is weather or not to display the stuff
         cv2.imshow("the image", testImg)
         if cv2.waitKey(1) & 0xFF == ord("q"):
             break
