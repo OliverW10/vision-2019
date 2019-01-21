@@ -1,0 +1,18 @@
+def findAngle(hatchRects):
+    w1, h1=hatchRects[0][1][0], hatchRects[0][1][1]
+    if w1>h1:
+        w1, h1 = h1, w1
+    w2, h2=hatchRects[1][1][0], hatchRects[1][1][1]
+    if w2>h2:
+        w2, h2 = h2, w1
+    angle1=w1*5/h1
+    angle2=w2*5/h2
+    Angle=(angle1+angle2)/2
+    Angle=Angle/2
+    return Angle
+
+closestToMiddle = min(pairs, key = lambda x:abs(x[0][0][0] - screenSize[0]/2))
+rotation=findAngle(closestToMiddle)
+
+
+the closestToMiddle is the one you already had
