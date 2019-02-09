@@ -1,51 +1,41 @@
 import cv2
 import numpy
+from cameraServer import getRetroPos
+import os
 
-#1100 F for microsoft hd life cam
+files = os.listdir("images")
+print(files)
+
+#335 focal length
 
 #Code for duel rects
 def getDistance(rects):
-    width = abs(rects[0][0] - rects[1][0])
-    if width > 0:
-        dist = (21 * 1200)/width
-        #   width of object * F 
-        return dist
-    else:
-        return None
+    if len(rects) > 1:
+        boxes = [cv2.boxPoints(rects[0]), cv2.boxPoints(rects[1])]
+        Lpoint = max(boxes[0], key = lambda x:x[0])
+        Rpoint = max(boxes[1], key = lambda x:-x[0])
+        width = abs(Lpoint[0] - Rpoint[0])
+        mid = (Rpoint[0]+Lpoint[0])/2
+        mid = mid - 320/2
+        offset = getOffset(width, mid)
+        if width > 0:
+            dist = (200 * 335)/width
+            #   width of object * F 
+            return dist, offset
+        else:
+            return None, offset
 
-#################
+def getOffset(width, x):
+    # if width = 20cm then what is x in cm
+    offset = x / (width / 20)
+    return -offset
 
+#cap = cv2.VideoCapture(0)
 
-def rectDist(rect):
-    width = max([rect[1][0], rect[1][1]])
-    height = min([rect[1][0], rect[1][1]])
-    if width > 0.001:
-        dist = (21 * 1200)/width
-        return dist
-    else:
-        return 0
+#_, img = cap.read()
+for img in files:
+    testImg = cv2.imread("images/"+img)
+    rects = getRetroPos(testImg, display = True)[4] #gives left rect, right rect
 
-def getRect(img):
-    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-    mask = cv2.inRange(hsv, (1, 180, 10), (15, 255, 254))
-    cv2.imshow("img", img)
-    cv2.imshow("mask", mask)
-    contours = cv2.findContours(mask, 1, 2)[-2]
-    distance = None
-    if len(contours) >= 1:
-        cnt = max(contours, key = cv2.contourArea)
-        rect = cv2.minAreaRect(cnt)
-        distance = rectDist(rect)
-    return distance
-
-testImg = cv2.imread("2.jpg")
-
-cap = cv2.VideoCapture(0)
-
-while True:
-    _, img = cap.read()
-    print(getDist(img))
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        cap.release()
-        cv2.destroyAllWindows() 
-        break
+    dist = getDistance(rects)
+    print(img+":   "+str(dist))

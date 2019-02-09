@@ -6,7 +6,7 @@ import cv2
 import math
 import time
 from collections import namedtuple
-from cscore import CameraServer
+#from cscore import CameraServer
 from networktables import NetworkTables
 
     
@@ -63,8 +63,7 @@ def getRetroPos(img, display=False, distance_away=distance_away):
     mask = cv2.inRange(hsv, lowerGreen, higherGreen) #Create a mask of everything in between the greens
     mask = cv2.dilate(mask, None, iterations=1) #Expand the mask to allow for further away tape
 
-    contours = cv2.findContours(mask, 1, 2)[1] #Find the contours
-    
+    contours = cv2.findContours(mask, 1, 2)[-2] #Find the contours
     if len(contours) > 1: #Get contours with area above magic number 10 and append its smallest rectangle
         rects = []
         for cnt in contours:
@@ -84,7 +83,7 @@ def getRetroPos(img, display=False, distance_away=distance_away):
         if len(pairs) >= 1:
             closestToMiddle = min(pairs, key = lambda x:abs((x[0][0][0]+x[1][0][0]) - screenSize[0]))
         else:
-            return False, math.nan, img, mask
+            return False, math.nan, img, mask, "didnt find enough rects"
 
         boxed_points = [np.int0(cv2.boxPoints(closestToMiddle[0])), np.int0(cv2.boxPoints(closestToMiddle[1]))]
         mid_points = (max(boxed_points[0], key=lambda x:x[0]), min(boxed_points[1], key=lambda x:x[0]))
@@ -103,8 +102,8 @@ def getRetroPos(img, display=False, distance_away=distance_away):
                     img = cv2.drawContours(img, [np.int0(cv2.boxPoints(pair[0]))], 0, (0, 0, 255), thickness=2)
                     img = cv2.drawContours(img, [np.int0(cv2.boxPoints(pair[1]))], 0, (0, 0, 255), thickness=2)
 
-        return radius>distance_away, -(((center_point/screenSize[0])*2)-1), img, mask
-    return False, math.nan, img, mask
+        return radius>distance_away, -(((center_point/screenSize[0])*2)-1), img, mask, closestToMiddle
+    return False, math.nan, img, mask, "didnt find any rects"
 
 
 if __name__ == "__main__":
